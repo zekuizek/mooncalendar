@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Calendar</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .calendar-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .month {
+            flex: 1;
+            min-width: 45%;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .month-header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 1.5em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            height: 100px;
+            vertical-align: top;
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .today {
+            background-color: #e8f4f8;
+            border: 2px solid #3498db;
+        }
+        .moon-phase {
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+        .zodiac-sign {
+            font-size: 0.9em;
+            color: #8e44ad;
+        }
+        .empty-day {
+            background-color: #f9f9f9;
+        }
+        .moon-icon {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        .navigation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .navigation a {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 0 10px;
+        }
+        .navigation a:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Moon Calendar</h1>
+    
+    <div class="navigation">
+        {% set prev_month = month - 1 if month > 1 else 12 %}
+        {% set prev_year = year if month > 1 else year - 1 %}
+        {% set next_month = month + 1 if month < 12 else 1 %}
+        {% set next_year = year if month < 12 else year + 1 %}
+        
+        <a href="/?month={{ prev_month }}&year={{ prev_year }}">Previous</a>
+        <a href="/?month={{ next_month }}&year={{ next_year }}">Next</a>
+    </div>
+    
+    <div class="calendar-container">
+        <!-- Current Month Calendar -->
+        <div class="month">
+            <div class="month-header">{{ month_name }} {{ year }}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                        <th>Sun</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                    <tr>
+                        {% for day in week %}
+                        {% if day == 0 %}
+                        <td class="empty-day"></td>
+                        {% else %}
+                        <td {% if day == today.day and month == today.month and year == today.year %}class="today"{% endif %}>
+                            <div class="day-number">{{ day }}</div>
+                            {% if day in month_data %}
+                            <div class="moon-phase">
+                                {% if month_data[day].moon_phase == "New Moon" %}
+                                <span class="moon-icon">🌑</span>
+                                {% elif month_data[day].moon_phase == "Waxing Crescent" %}
+                                <span class="moon-icon">🌒</span>
+                                {% elif month_data[day].moon_phase == "First Quarter" %}
+                                <span class="moon-icon">🌓</span>
+                                {% elif month_data[day].moon_phase == "Waxing Gibbous" %}
+                                <span class="moon-icon">🌔</span>
+                                {% elif month_data[day].moon_phase == "Full Moon" %}
+                                <span class="moon-icon">🌕</span>
+                                {% elif month_data[day].moon_phase == "Waning Gibbous" %}
+                                <span class="moon-icon">🌖</span>
+                                {% elif month_data[day].moon_phase == "Last Quarter" %}
+                                <span class="moon-icon">🌗</span>
+                                {% elif month_data[day].moon_phase == "Waning Crescent" %}
+                                <span class="moon-icon">🌘</span>
+                                {% endif %}
+                                {{ month_data[day].moon_phase }}
+                            </div>
+                            <div class="zodiac-sign">{{ month_data[day].moon_sign }}</div>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Next Month Calendar -->
+        <div class="month">
+            <div class="month-header">{{ next_month_name }} {{ next_month_year }}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                        <th>Sun</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in next_calendar %}
+                    <tr>
+                        {% for day in week %}
+                        {% if day == 0 %}
+                        <td class="empty-day"></td>
+                        {% else %}
+                        <td {% if day == today.day and next_month == today.month and next_month_year == today.year %}class="today"{% endif %}>
+                            <div class="day-number">{{ day }}</div>
+                            {% if day in next_month_data %}
+                            <div class="moon-phase">
+                                {% if next_month_data[day].moon_phase == "New Moon" %}
+                                <span class="moon-icon">🌑</span>
+                                {% elif next_month_data[day].moon_phase == "Waxing Crescent" %}
+                                <span class="moon-icon">🌒</span>
+                                {% elif next_month_data[day].moon_phase == "First Quarter" %}
+                                <span class="moon-icon">🌓</span>
+                                {% elif next_month_data[day].moon_phase == "Waxing Gibbous" %}
+                                <span class="moon-icon">🌔</span>
+                                {% elif next_month_data[day].moon_phase == "Full Moon" %}
+                                <span class="moon-icon">🌕</span>
+                                {% elif next_month_data[day].moon_phase == "Waning Gibbous" %}
+                                <span class="moon-icon">🌖</span>
+                                {% elif next_month_data[day].moon_phase == "Last Quarter" %}
+                                <span class="moon-icon">🌗</span>
+                                {% elif next_month_data[day].moon_phase == "Waning Crescent" %}
+                                <span class="moon-icon">🌘</span>
+                                {% endif %}
+                                {{ next_month_data[day].moon_phase }}
+                            </div>
+                            <div class="zodiac-sign">{{ next_month_data[day].moon_sign }}</div>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
