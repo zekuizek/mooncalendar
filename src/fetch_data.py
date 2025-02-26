@@ -1,94 +1,110 @@
 """
-Script to generate sample moon phase and zodiac sign data for testing.
+Script to fetch or generate moon data for the calendar.
 """
 import datetime
+import random
+import sqlite3
 from dateutil.relativedelta import relativedelta
 from database import init_db, save_calendar_data
 
-def generate_sample_data():
+# Moon phases in order
+MOON_PHASES = [
+    "New Moon", 
+    "Waxing Crescent", 
+    "First Quarter", 
+    "Waxing Gibbous", 
+    "Full Moon", 
+    "Waning Gibbous", 
+    "Last Quarter", 
+    "Waning Crescent"
+]
+
+# Zodiac signs in order
+ZODIAC_SIGNS = [
+    "Aries", "Taurus", "Gemini", "Cancer", 
+    "Leo", "Virgo", "Libra", "Scorpio", 
+    "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+]
+
+def generate_sample_data(start_date, num_days=30):
     """
-    Generate sample moon phase and zodiac sign data for one month.
+    Generate sample moon data for a given period.
+    
+    Args:
+        start_date (datetime.date): The start date
+        num_days (int): Number of days to generate data for
+        
+    Returns:
+        list: List of dictionaries with moon data
     """
     # Initialize the database
     init_db()
     
-    # Calculate start and end dates
-    today = datetime.date.today()
-    end_date = today + relativedelta(months=1)
-    
-    # Sample moon phases in order
-    moon_phases = [
-        "New Moon", 
-        "Waxing Crescent", 
-        "First Quarter", 
-        "Waxing Gibbous", 
-        "Full Moon", 
-        "Waning Gibbous", 
-        "Last Quarter", 
-        "Waning Crescent"
-    ]
-    
-    # Sample zodiac signs
-    zodiac_signs = [
-        "Aries", "Taurus", "Gemini", "Cancer", 
-        "Leo", "Virgo", "Libra", "Scorpio", 
-        "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-    ]
+    # Set initial moon phase and zodiac sign
+    current_phase_index = random.randint(0, len(MOON_PHASES) - 1)
+    current_sign_index = random.randint(0, len(ZODIAC_SIGNS) - 1)
     
     # Generate data for each day
-    current_date = today
-    phase_index = 0
-    zodiac_index = today.month % 12
-    
-    all_data = []
-    
-    while current_date < end_date:
-        # Get moon phase (changes every ~3.5 days)
-        if current_date.day % 4 == 0:
-            phase_index = (phase_index + 1) % len(moon_phases)
+    for day_offset in range(num_days):
+        current_date = start_date + datetime.timedelta(days=day_offset)
         
-        # Get zodiac sign (changes every ~2.5 days)
-        if current_date.day % 3 == 0:
-            zodiac_index = (zodiac_index + 1) % len(zodiac_signs)
+        # Change moon phase every 3-4 days
+        if day_offset % random.randint(3, 4) == 0 and day_offset > 0:
+            current_phase_index = (current_phase_index + 1) % len(MOON_PHASES)
         
-        # Calculate illumination based on moon phase
-        if moon_phases[phase_index] == "New Moon":
-            illumination = "0%"
-        elif moon_phases[phase_index] == "Full Moon":
-            illumination = "100%"
-        elif "Waxing" in moon_phases[phase_index]:
-            illumination = f"{25 + (moon_phases.index(moon_phases[phase_index]) * 15)}%"
-        else:
-            illumination = f"{100 - (moon_phases.index(moon_phases[phase_index]) * 15)}%"
+        # Change zodiac sign every 2-3 days
+        if day_offset % random.randint(2, 3) == 0 and day_offset > 0:
+            current_sign_index = (current_sign_index + 1) % len(ZODIAC_SIGNS)
         
-        # Create sample data
-        day_data = {
-            "date": current_date.strftime('%Y-%m-%d'),
-            "phase": moon_phases[phase_index],
-            "illumination": illumination,
-            "moon_age": f"{current_date.day % 30} days",
-            "moon_distance": f"{356000 + (current_date.day * 1000)} km",
-            "moon_sign": zodiac_signs[zodiac_index]
-        }
+        # Generate random illumination percentage based on moon phase
+        if MOON_PHASES[current_phase_index] == "New Moon":
+            illumination = f"{random.randint(0, 5)}%"
+        elif MOON_PHASES[current_phase_index] == "Full Moon":
+            illumination = f"{random.randint(95, 100)}%"
+        elif "Crescent" in MOON_PHASES[current_phase_index]:
+            illumination = f"{random.randint(10, 40)}%"
+        elif "Quarter" in MOON_PHASES[current_phase_index]:
+            illumination = f"{random.randint(45, 55)}%"
+        elif "Gibbous" in MOON_PHASES[current_phase_index]:
+            illumination = f"{random.randint(60, 90)}%"
+        
+        # Generate random moon age (0-29 days)
+        moon_age = f"{random.randint(0, 29)} days"
+        
+        # Generate random moon distance
+        moon_distance = f"{random.randint(356000, 406000)} km"
         
         # Save to database
         save_calendar_data(
-            date_obj=current_date,
-            moon_phase=day_data['phase'],
-            illumination=day_data['illumination'],
-            moon_age=day_data['moon_age'],
-            moon_distance=day_data['moon_distance'],
-            moon_sign=day_data['moon_sign']
+            current_date,
+            MOON_PHASES[current_phase_index],
+            illumination,
+            moon_age,
+            moon_distance,
+            ZODIAC_SIGNS[current_sign_index]
         )
-        
-        all_data.append(day_data)
-        current_date += datetime.timedelta(days=1)
-    
-    return all_data
 
+def fetch_api_data(start_date, num_days=30):
+    """
+    Fetch moon data from an API for a given period.
+    This is a placeholder for future API integration.
+    
+    Args:
+        start_date (datetime.date): The start date
+        num_days (int): Number of days to fetch data for
+    """
+    # This would be implemented with actual API calls
+    # For now, we'll use the sample data generator
+    generate_sample_data(start_date, num_days)
 
 if __name__ == "__main__":
-    print("Generating sample moon phase and zodiac sign data for one month...")
-    data = generate_sample_data()
-    print(f"Successfully generated and stored sample data for {len(data)} days.")
-    print("Data is stored in the SQLite database and will be available for future runs.")
+    # Generate data for the current month and the next month
+    today = datetime.date.today()
+    first_day_current_month = today.replace(day=1)
+    first_day_next_month = (first_day_current_month + relativedelta(months=1))
+    
+    # Generate two months of data
+    generate_sample_data(first_day_current_month, 31)  # Current month
+    generate_sample_data(first_day_next_month, 31)     # Next month
+    
+    print("Sample moon data generated for the current and next month.")

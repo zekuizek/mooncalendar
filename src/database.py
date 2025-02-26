@@ -4,6 +4,7 @@ Database module for the Moon Calendar application using direct SQLite3 instead o
 import os
 import sqlite3
 import datetime
+from biodynamic_data import get_biodynamic_info
 
 # Create the database directory if it doesn't exist
 os.makedirs(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data'), exist_ok=True)
@@ -35,7 +36,9 @@ def init_db():
         illumination TEXT,
         moon_age TEXT,
         moon_distance TEXT,
-        moon_sign TEXT NOT NULL
+        moon_sign TEXT NOT NULL,
+        element TEXT,
+        plant_part TEXT
     )
     ''')
     
@@ -60,6 +63,11 @@ def save_calendar_data(date_obj, moon_phase, illumination, moon_age, moon_distan
     # Convert date to string format
     date_str = date_obj.strftime('%Y-%m-%d')
     
+    # Get biodynamic information based on the zodiac sign
+    biodynamic_info = get_biodynamic_info(moon_sign)
+    element = biodynamic_info.get('element', '')
+    plant_part = biodynamic_info.get('plant_part', '')
+    
     # Check if the date already exists
     cursor.execute('SELECT id FROM calendar_data WHERE date = ?', (date_str,))
     existing = cursor.fetchone()
@@ -68,15 +76,19 @@ def save_calendar_data(date_obj, moon_phase, illumination, moon_age, moon_distan
         # Update existing entry
         cursor.execute('''
         UPDATE calendar_data
-        SET moon_phase = ?, illumination = ?, moon_age = ?, moon_distance = ?, moon_sign = ?
+        SET moon_phase = ?, illumination = ?, moon_age = ?, moon_distance = ?, moon_sign = ?,
+            element = ?, plant_part = ?
         WHERE date = ?
-        ''', (moon_phase, illumination, moon_age, moon_distance, moon_sign, date_str))
+        ''', (moon_phase, illumination, moon_age, moon_distance, moon_sign, 
+              element, plant_part, date_str))
     else:
         # Insert new entry
         cursor.execute('''
-        INSERT INTO calendar_data (date, moon_phase, illumination, moon_age, moon_distance, moon_sign)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ''', (date_str, moon_phase, illumination, moon_age, moon_distance, moon_sign))
+        INSERT INTO calendar_data 
+        (date, moon_phase, illumination, moon_age, moon_distance, moon_sign, element, plant_part)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (date_str, moon_phase, illumination, moon_age, moon_distance, moon_sign,
+              element, plant_part))
     
     conn.commit()
     conn.close()
